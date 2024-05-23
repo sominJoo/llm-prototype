@@ -1,0 +1,13 @@
+# Python 가상환경에서 사용할 패키지 목록
+# $ pip install -r requirements.txt
+Django~=5.0.6
+djangorestframework
+python-decouple
+
+# Langchain 관련 패키지
+langchain
+langchain-experimental
+langchain-community
+langchain-openai
+openai
+faiss-cpu
