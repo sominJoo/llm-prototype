@@ -16,8 +16,14 @@ Including another URLconf
 """
 from django.urls import  path
 
-from llm.views import LlmAPIView
+from llm.views.chat import ChatAPIView
+from llm.views.db import DBAPIView
+from llm.views.docs import DocsAPIView
+from llm.views.graphDB import GraphDBAPIView
 
 urlpatterns = [
-    path('', LlmAPIView.as_view()),
+    path('chat/', ChatAPIView.as_view()),
+    path('db/', DBAPIView.as_view()),
+    path('docs/', DocsAPIView.as_view()),
+    path('graph-db/', GraphDBAPIView.as_view()),
 ]

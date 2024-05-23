@@ -16,8 +16,6 @@ Including another URLconf
 """
 from django.urls import include, path
 
-from llm.views import LlmAPIView
-
 api_urls = [
     path('llm/', include('llm.urls')),
 ]
