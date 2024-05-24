@@ -26,6 +26,11 @@ SECRET_KEY = config("SECRET_KEY")
 # 추후 settings.OPENAI_API_KEY로 호출
 OPENAI_API_KEY = config("OPENAI_API_KEY")
 
+# NEO4J connect info load
+NEO4J_URI = config("NEO4J_URI")
+NEO4J_USER = config("NEO4J_USER")
+NEO4J_PASSWORD = config("NEO4J_PASSWORD")
+
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
