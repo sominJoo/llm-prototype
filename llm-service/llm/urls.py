@@ -17,13 +17,7 @@ Including another URLconf
 from django.urls import  path
 
 from llm.views.chat import ChatAPIView
-from llm.views.db import DBAPIView
-from llm.views.docs import DocsAPIView
-from llm.views.graphDB import GraphDBAPIView
 
 urlpatterns = [
     path('chat/', ChatAPIView.as_view()),
-    path('db/', DBAPIView.as_view()),
-    path('docs/', DocsAPIView.as_view()),
-    path('graph-db/', GraphDBAPIView.as_view()),
 ]
