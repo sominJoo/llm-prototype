@@ -11,3 +11,7 @@ langchain-community
 langchain-openai
 openai
 faiss-cpu
+
+pandas~=2.2.2
+openpyxl
+tabulate
