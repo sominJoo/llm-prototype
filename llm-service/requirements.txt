@@ -3,6 +3,8 @@
 Django~=5.0.6
 djangorestframework
 python-decouple
+neo4j
+psycopg2
 
 # Langchain 관련 패키지
 langchain
