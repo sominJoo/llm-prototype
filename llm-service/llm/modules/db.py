@@ -4,10 +4,9 @@ from langchain_experimental.sql import SQLDatabaseChain
 from langchain_core.prompts import ChatPromptTemplate
 
 
-
 class BasicDBModule:
     @classmethod
-    def dbChain(cls, llm):
+    def dbChain(cls, llm, memory):
         """
         일반 DB을 LLM에 연동하는 모듈.
         :param llm: 선언한 LLM 모델
@@ -33,9 +32,12 @@ class BasicDBModule:
                 
                 SQL 쿼리는 명확하게 출력되어야 하며 따옴표나 다른 것(Markdown)으로 둘러싸지 않아야 합니다.
                 아래에 나열된 표만 사용하십시오.
+                
                 {table_info}
-                질문: {input}
+                
+                History: {history}
+                Question: {input}
             """
         )
-        db_chain = SQLDatabaseChain.from_llm(llm, db, prompt, verbose=True)
+        db_chain = SQLDatabaseChain.from_llm(llm=llm, db=db, prompt=prompt, memory=memory, verbose=True)
         return db_chain

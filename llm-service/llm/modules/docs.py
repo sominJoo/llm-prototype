@@ -13,7 +13,7 @@ from langchain.chains.combine_documents import create_stuff_documents_chain
 
 class DoscModule:
     @classmethod
-    def docsChain(cls, llm, file):
+    def docsChain(cls, llm, file, memory):
 
         tmp_file_path = cls.read_file(file)
 
@@ -21,7 +21,7 @@ class DoscModule:
         data = CSVLoader(file_path=tmp_file_path)
         docs = data.load()
 
-        chain = cls.setup_retrieval_pipeline(llm, docs)
+        chain = cls.setup_retrieval_pipeline(llm, docs, memory)
 
         # 임시 파일 삭제
         if tmp_file_path and os.path.exists(tmp_file_path):
@@ -30,13 +30,13 @@ class DoscModule:
         return chain
 
     @classmethod
-    def urlChain(cls, llm, url):
+    def urlChain(cls, llm, url, memory):
 
         # 문서 로드
         data = WebBaseLoader(url)
         docs = data.load()
 
-        chain = cls.setup_retrieval_pipeline(llm, docs)
+        chain = cls.setup_retrieval_pipeline(llm, docs, memory)
 
         return chain
 
@@ -52,7 +52,7 @@ class DoscModule:
         return tmp_file_path
 
     @staticmethod
-    def setup_retrieval_pipeline(llm, docs):
+    def setup_retrieval_pipeline(llm, docs, memory):
 
         # OpenAI 임베딩 생성기 초기화
         embeddings = OpenAIEmbeddings(model="text-embedding-3-large", api_key=OPENAI_API_KEY)
@@ -70,13 +70,14 @@ class DoscModule:
                 기존에 알고 있었던 정보는 모두 잊어.
                 주어진 정보를 참고 하여 답변을 해야해.
                 주어진 정보를 참고 해도 알 수 없을 경우 항상 "제가 가진 정보로는 알 수 없습니다."로 응답 해줘.
+                History: {history}
                 Context: {context}
                 Question: {input}
             """
         )
 
         retriever = vector.as_retriever()
-        document_chain = create_stuff_documents_chain(llm, prompt)
+        document_chain = create_stuff_documents_chain(llm=llm, prompt=prompt, memory=memory)
         chain = create_retrieval_chain(retriever, document_chain)
 
         return chain
