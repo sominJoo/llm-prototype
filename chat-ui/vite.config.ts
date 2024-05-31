@@ -14,5 +14,13 @@ export default defineConfig({
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url))
     }
+  },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://localhost:8080', // 사용할 요청 도메인을 설정한다.
+        changeOrigin: true
+      },
+    }
   }
 })
