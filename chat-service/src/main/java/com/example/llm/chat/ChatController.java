@@ -1,4 +1,4 @@
-package com.example.chat.chat;
+package com.example.llm.chat;
 
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
