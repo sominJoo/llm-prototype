@@ -2,13 +2,17 @@ package com.example.llm.chat;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.tomcat.util.http.fileupload.IOUtils;
+import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -25,12 +29,23 @@ public class ChatService {
         body.add("chat", chat);
         body.add("thread_id", threadId);
         if (file != null) {
+            log.info(file.getOriginalFilename());
             try {
-                body.add("file", file.getBytes());
+                log.info(file.getOriginalFilename());
+                InputStream inputStream = file.getInputStream();
+                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+                byte[] buffer = new byte[1024];
+                int length;
+                while ((length = inputStream.read(buffer)) != -1) {
+                    outputStream.write(buffer, 0, length);
+                }
+                body.add("file", new ByteArrayResource(outputStream.toByteArray()));
             } catch (IOException e) {
+                log.info("file error");
                 throw new RuntimeException(e);
             }
         } else {
+            log.info("file 없음");
             body.add("file", "");
         }
 
