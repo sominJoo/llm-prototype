@@ -72,12 +72,11 @@ const receiveMessage = async (message: { content: string, files: any[] }) => {
     const response: AxiosResponse = await axios.post("/api/llm/chat", formData);
     addMessageToChat(response);
   } catch (err) {
-    console.error('err,,,,,', err)
+    console.error(err)
   }
 }
 
 const addMessageToChat = (response: AxiosResponse) => {
-  setTimeout(() => {
     messages.value = [
       ...messages.value,
       {
@@ -88,6 +87,5 @@ const addMessageToChat = (response: AxiosResponse) => {
         date: new Date().toDateString()
       }
     ]
-  }, 1500)
 }
 </script>
