@@ -3,12 +3,14 @@
     <vue-advanced-chat
         :current-user-id="'USER'"
         :rooms="JSON.stringify(rooms)"
-        :rooms-loaded="true"
+        :rooms-list-opened="false"
+        :loading-rooms="false"
+        :messages-loaded="true"
+        :rooms-loaded="false"
         :show-audio="false"
         :messages="JSON.stringify(messages)"
-        :messages-loaded="messagesLoaded"
         @send-message="sendMessage($event.detail[0])"
-        @fetch-messages="fetchMessages($event.detail[0])"
+        @fetch-message="addMessageToChat"
     />
   </div>
 </template>
@@ -16,51 +18,32 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { register } from 'vue-advanced-chat'
+import axios, {type AxiosResponse} from "axios";
 register();
+const currentUserId = "USER";
 
 const rooms = ref([
   {
-    roomId: '1',
-    roomName: 'Room 1',
+    roomId: Math.random().toString(),
+    roomName: 'Chat AI',
     avatar: 'https://66.media.tumblr.com/avatar_c6a8eae4303e_512.pnj',
     users: [
-      { _id: '1234', username: 'John Doe' },
-      { _id: '4321', username: 'John Snow' }
+      { _id: 'Chat AI', username: 'Chat AI' },
+      { _id: 'USER', username: 'USER' }
     ]
   }
 ]);
-const messages = ref([]);
-const messagesLoaded = ref(false);
 
-const fetchMessages = ({ options = {} }) => {
-  setTimeout(() => {
-    if (options.reset) {
-      messages.value = addMessages(true)
-    } else {
-      messages.value = [...addMessages(), ...messages.value]
-      messagesLoaded.value = true
-    }
-  })
-};
+interface Message {
+  _id: number,
+  content: string,
+  senderId: string,
+  timestamp?: string,
+  date: string
+}
+const messages = ref<Message[]>([]);
 
-const addMessages = (reset: boolean) => {
-  const newMessages = []
-
-  for (let i = 0; i < 30; i++) {
-    newMessages.push({
-      _id: reset ? i : messages.value.length + i,
-      content: `${reset ? '' : 'paginated'} message ${i + 1}`,
-      senderId: '4321',
-      username: 'John Doe',
-      date: '13 November',
-      timestamp: '10:20'
-    })
-  }
-
-  return newMessages
-};
-
-const sendMessage = (message: { content: string }) => {
+const sendMessage = (message: { content: string, files: any[] }) => {
   messages.value = [
     ...messages.value,
     {
@@ -71,20 +54,40 @@ const sendMessage = (message: { content: string }) => {
       date: new Date().toDateString()
     }
   ]
+  receiveMessage(message);
 };
 
-const addNewMessage = () => {
+const receiveMessage = async (message: { content: string, files: any[] }) => {
+  const formData = new FormData();
+  formData.append('chat', message.content);
+  formData.append('threadId', rooms.value[0].roomId)
+
+  if(message.files && message.files.length > 0) {
+    message.files.forEach(file => {
+      formData.append('file', file, file.name)
+    })
+  }
+
+  try {
+    const response: AxiosResponse = await axios.post("/api/llm/chat", formData);
+    addMessageToChat(response);
+  } catch (err) {
+    console.error('err,,,,,', err)
+  }
+}
+
+const addMessageToChat = (response: AxiosResponse) => {
   setTimeout(() => {
     messages.value = [
       ...messages.value,
       {
         _id: messages.value.length,
-        content: 'NEW MESSAGE',
-        senderId: '1234',
+        content: response.data.data,
+        senderId: "Chat AI",
         timestamp: new Date().toString().substring(16, 21),
         date: new Date().toDateString()
       }
     ]
-  }, 2000)
-};
+  }, 1500)
+}
 </script>
