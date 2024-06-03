@@ -3,10 +3,9 @@ import re
 
 from llm.modules import graphDB, db, docs
 from rest_framework.views import APIView
+from llmapp.settings import LLM
 
-from llmapp import settings
 from llmapp.response import auto_response
-from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
 
 
@@ -18,6 +17,9 @@ class ChatAPIView(APIView):
         :param request: { chat : "", file: "", thread_id: ""}
         :return: LLM 답변 문자열
         """
+        if (LLM == None):
+            return "현재 Chat 기능을 사용할 수 없습니다."
+
         question = request.data["chat"]
         file = request.data["file"]
         thread_id = request.data["thread_id"]
@@ -26,34 +28,31 @@ class ChatAPIView(APIView):
         if not question:
             return "질문을 입력해 주세요"
 
-        # TODO: LLM 모델변경 기능 추가
-        llm = ChatOpenAI(temperature=0, api_key=settings.OPENAI_API_KEY, model_name='gpt-3.5-turbo')
-
         # Question 분석 / 질문 타입 찾기
-        question_type = self.check_chain_type(llm, question)
+        question_type = self.check_chain_type(LLM, question)
         print("question_type = ", question_type)
 
         result = ""
         try:
             # type에 따른 분기
             if question_type == "graph":
-                graphDB_chain = graphDB.GraphDBModule.graphChain(llm)
+                graphDB_chain = graphDB.GraphDBModule.graphChain(LLM)
                 response = graphDB_chain.invoke(question)
                 result = response["result"]
             elif question_type == "db":
-                db_chain = db.BasicDBModule.dbChain(llm)
+                db_chain = db.BasicDBModule.dbChain(LLM)
                 response = db_chain.invoke(question)
                 result = response["result"]
             elif question_type == "llm":
-                response = llm.invoke(question)
+                response = LLM.invoke(question)
                 result = response.content
             elif question_type == "docs":
                 url = self.parse_url(question)
                 dcos_chain = None
                 if url:
-                    dcos_chain = docs.DoscModule.urlChain(llm, url)
+                    dcos_chain = docs.DoscModule.urlChain(LLM, url)
                 elif file:
-                    dcos_chain = docs.DoscModule.docsChain(llm, file)
+                    dcos_chain = docs.DoscModule.docsChain(LLM, file)
 
                 response = dcos_chain.invoke({"input": question})
                 result = response["answer"]
@@ -68,7 +67,7 @@ class ChatAPIView(APIView):
     def check_chain_type(llm, question):
         """
         질문을 분석서 질문의 타입을 반환해주는 정적 메소드이다.
-        :param llm: 선언 LLM 모델
+        :param llm: 선언된 LLM 모델
         :param question: 사용자의 질문 입력값
         :return: graph | db | docs | llm
         """
