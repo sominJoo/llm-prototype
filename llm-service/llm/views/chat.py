@@ -49,9 +49,14 @@ class ChatAPIView(APIView):
                 result = response.content
             elif question_type == "docs":
                 url = self.parse_url(question)
-                # db_chain = db.BasicDBModule.dbChain(llm, file, url)
-                # response = db_chain.invoke({"input": question})
-                # result = response["result"]
+                dcos_chain = None
+                if url:
+                    dcos_chain = docs.DoscModule.urlChain(llm, url)
+                elif file:
+                    dcos_chain = docs.DoscModule.docsChain(llm, file)
+
+                response = dcos_chain.invoke({"input": question})
+                result = response["answer"]
         except Exception as e:
             result = "정확한 답을 찾을 수 없습니다."
 
