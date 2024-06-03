@@ -41,7 +41,7 @@ POSTGRES_PORT = config("POSTGRES_PORT")
 POSTGRES_DATABASE = config("POSTGRES_DATABASE")
 
 # LLM model setting
-LLM = {"gpt3.5": ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo"), "llama3": Ollama(model="llama3")}.get(config("LLM"), "Invalid value")
+LLM = {"gpt3.5": ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo"), "llama3": Ollama(model="llama3")}.get(config("LLM"), None)
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 

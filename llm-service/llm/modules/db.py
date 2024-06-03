@@ -6,8 +6,8 @@ from langchain_core.prompts import ChatPromptTemplate
 
 
 class BasicDBModule:
-    @classmethod
-    def dbChain(cls, llm):
+    @staticmethod
+    def dbChain(llm):
         """
         일반 DB을 LLM에 연동하는 모듈.
         :param llm: 선언한 LLM 모델
