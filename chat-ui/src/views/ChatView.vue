@@ -5,7 +5,7 @@
         :rooms="JSON.stringify(rooms)"
         :rooms-list-opened="false"
         :loading-rooms="false"
-        :messages-loaded="false"
+        :messages-loaded="true"
         :rooms-loaded="false"
         :show-audio="false"
         :messages="JSON.stringify(messages)"
@@ -24,7 +24,7 @@ const currentUserId = "USER";
 
 const rooms = ref([
   {
-    roomId: '1',
+    roomId: Math.random().toString(),
     roomName: 'Chat AI',
     avatar: 'https://66.media.tumblr.com/avatar_c6a8eae4303e_512.pnj',
     users: [
