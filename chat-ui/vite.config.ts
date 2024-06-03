@@ -18,7 +18,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://localhost:8080', // 사용할 요청 도메인을 설정한다.
+        target: 'http://localhost:8080',
         changeOrigin: true
       },
     }
