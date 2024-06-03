@@ -58,8 +58,8 @@ class ChatAPIView(APIView):
                 response = dcos_chain.invoke({"input": question})
                 result = response["answer"]
         except Exception as e:
-            result = "정확한 답을 찾을 수 없습니다."
-
+            # result = "정확한 답변을 찾을 수 없습니다."
+            result = e
         print("response = ", result)
 
         return result
