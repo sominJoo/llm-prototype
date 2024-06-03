@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/5.0/ref/settings/
 import os
 from pathlib import Path
 from decouple import config
+from langchain_openai import ChatOpenAI
+from langchain_community.llms import Ollama
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -38,6 +40,8 @@ POSTGRES_HOST = config("POSTGRES_HOST")
 POSTGRES_PORT = config("POSTGRES_PORT")
 POSTGRES_DATABASE = config("POSTGRES_DATABASE")
 
+# LLM model setting
+LLM = {"gpt3.5": ChatOpenAI(api_key=OPENAI_API_KEY, model="gpt-3.5-turbo"), "llama3": Ollama(model="llama3")}.get(config("LLM"), "Invalid value")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
