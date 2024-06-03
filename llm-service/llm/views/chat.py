@@ -7,9 +7,13 @@ from llmapp.settings import LLM
 
 from llmapp.response import auto_response
 from langchain_core.prompts import ChatPromptTemplate
+from langchain.memory import ConversationBufferMemory
+from langchain.chains import ConversationChain
 
 
 class ChatAPIView(APIView):
+    memory_dict = {}
+
     @auto_response
     def post(self, request):
         """
@@ -23,6 +27,14 @@ class ChatAPIView(APIView):
         question = request.data["chat"]
         file = request.data["file"]
         thread_id = request.data["thread_id"]
+
+        if not thread_id:
+            return "대화 내용이 없습니다."
+
+        if thread_id not in self.memory_dict:
+            self.memory_dict[thread_id] = ConversationBufferMemory(memory_key="history")
+        thread_memory = self.memory_dict[thread_id]
+        print("thread_memory", thread_memory)
 
         # 질문 확인
         if not question:
@@ -41,11 +53,23 @@ class ChatAPIView(APIView):
                 result = response["result"]
             elif question_type == "db":
                 db_chain = db.BasicDBModule.dbChain(LLM)
-                response = db_chain.invoke(question)
+                new_chain = db_chain | thread_memory
+                response = new_chain.invoke(question)
                 result = response["result"]
             elif question_type == "llm":
-                response = LLM.invoke(question)
-                result = response.content
+                # Question 분석 찾기
+                question_prompt = ChatPromptTemplate.from_template(
+                    """ History : {history}
+                        Question: {input}"""
+                )
+                llm_chain = ConversationChain(
+                    llm=LLM,
+                    memory=thread_memory,
+                    prompt=question_prompt,
+                    output_key="answer"
+                )
+                response = llm_chain.invoke(question)
+                result = response["answer"]
             elif question_type == "docs":
                 url = self.parse_url(question)
                 dcos_chain = None
