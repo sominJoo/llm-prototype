@@ -48,7 +48,7 @@ class ChatAPIView(APIView):
         try:
             # type에 따른 분기
             if question_type == "graph":
-                graphDB_chain = graphDB.GraphDBModule.graphChain(LLM)
+                graphDB_chain = graphDB.GraphDBModule.graphChain(LLM, thread_memory)
                 response = graphDB_chain.invoke(question)
                 result = response["result"]
             elif question_type == "db":
