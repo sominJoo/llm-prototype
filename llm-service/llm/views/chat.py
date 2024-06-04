@@ -52,11 +52,18 @@ class ChatAPIView(APIView):
                 graphDB_chain = graphDB.GraphDBModule.graphChain(LLM, thread_memory)
                 response = graphDB_chain.invoke(question)
                 result = response["result"]
+
             elif question_type == "db":
-                db_chain = db.BasicDBModule.dbChain(LLM)
-                new_chain = db_chain | thread_memory
-                response = new_chain.invoke(question)
+                db_chain = db.BasicDBModule.dbChain(LLM, thread_memory)
+                # NOTE: SQLDatabaseChain에 memory 기능이 존재하지 않으므로 History를 강제로 넣어줌
+                # response = db_chain.invoke({'input': question, 'history': thread_memory.chat_memory.messages})
+                # response = db_chain.invoke({'query': question})
+                # result = response["result"]
+                # 메모리에 대화 내용 저장
+                # thread_memory.save_context({"input": question}, {"response": result})
+                response = db_chain.invoke(question)
                 result = response["result"]
+
             elif question_type == "llm":
                 # Question 분석 찾기
                 question_prompt = ChatPromptTemplate.from_template(
@@ -71,6 +78,7 @@ class ChatAPIView(APIView):
                 )
                 response = llm_chain.invoke(question)
                 result = response["answer"]
+
             elif question_type == "docs":
                 url = self.parse_url(LLM, question, thread_memory)
                 dcos_chain = None
@@ -80,10 +88,11 @@ class ChatAPIView(APIView):
                     dcos_chain = docs.DoscModule.urlChain(LLM, url)
 
                 # NOTE: ConversationalRetrievalChain 사용시 memory 속성값 작동이 잘 되지 않아 input 값으로 history 이전 내용을 넣어줌
-                response = dcos_chain.invoke({'input': question, 'history': thread_memory.chat_memory.messages})
+                response = dcos_chain.invoke({'input': question, 'thread_history': thread_memory.chat_memory.messages})
                 result = response["answer"]
                 # 메모리에 대화 내용 저장
                 thread_memory.save_context({"input": question}, {"response": result})
+
         except Exception as e:
             # result = "정확한 답변을 찾을 수 없습니다."
             result = e
