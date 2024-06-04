@@ -8,6 +8,7 @@
         :messages-loaded="true"
         :rooms-loaded="false"
         :show-audio="false"
+        :multiple-files="false"
         :messages="JSON.stringify(messages)"
         @send-message="sendMessage($event.detail[0])"
         @fetch-message="addMessageToChat"
@@ -39,21 +40,36 @@ interface Message {
   content: string,
   senderId: string,
   timestamp?: string,
-  date: string
+  date: string,
+  files?: object[]
 }
 const messages = ref<Message[]>([]);
 
 const sendMessage = (message: { content: string, files: any[] }) => {
-  messages.value = [
-    ...messages.value,
-    {
-      _id: messages.value.length,
-      content: message.content,
-      senderId: currentUserId,
-      timestamp: new Date().toString().substring(16, 21),
-      date: new Date().toDateString()
-    }
-  ]
+  if(message.files) {
+    messages.value = [
+      ...messages.value,
+      {
+        _id: messages.value.length,
+        content: message.content,
+        senderId: currentUserId,
+        timestamp: new Date().toString().substring(16, 21),
+        date: new Date().toDateString(),
+        files: [message.files[0]]
+      }
+    ]
+  } else {
+    messages.value = [
+      ...messages.value,
+      {
+        _id: messages.value.length,
+        content: message.content,
+        senderId: currentUserId,
+        timestamp: new Date().toString().substring(16, 21),
+        date: new Date().toDateString()
+      }
+    ]
+  }
   receiveMessage(message);
 };
 
