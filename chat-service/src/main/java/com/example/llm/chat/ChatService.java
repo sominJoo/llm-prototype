@@ -7,6 +7,7 @@ import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.util.LinkedMultiValueMap;
+import org.springframework.util.MultiValueMap;
 import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -23,23 +24,32 @@ public class ChatService {
 
     private final RestTemplate restTemplate;
 
-    public Object postChat(String chat, String threadId, MultipartFile file) throws RuntimeException {
-
+    public Object postChat(String chat, String threadId, MultipartFile file) throws RuntimeException, IOException {
+        
+        HttpHeaders headers = new HttpHeaders();
         LinkedMultiValueMap<String, Object> body = new LinkedMultiValueMap<>();
         body.add("chat", chat);
         body.add("thread_id", threadId);
         if (file != null) {
-            log.info(file.getOriginalFilename());
-            try {
-                log.info(file.getOriginalFilename());
-                InputStream inputStream = file.getInputStream();
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            String fileName = file.getOriginalFilename();
+            try (
+                    InputStream inputStream = file.getInputStream();
+                    ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
+            ) {
                 byte[] buffer = new byte[1024];
                 int length;
                 while ((length = inputStream.read(buffer)) != -1) {
                     outputStream.write(buffer, 0, length);
                 }
-                body.add("file", new ByteArrayResource(outputStream.toByteArray()));
+                
+                ByteArrayResource resource = new ByteArrayResource(outputStream.toByteArray()){
+                    @Override
+                    public String getFilename(){
+                        return fileName; // 파일 이름 설정
+                    }
+                };
+                headers.set("Content-Disposition", "form-data; name=\"file\"; filename="+file.getOriginalFilename());
+                body.add("file", resource);
             } catch (IOException e) {
                 log.info("file error");
                 throw new RuntimeException(e);
@@ -49,15 +59,17 @@ public class ChatService {
             body.add("file", "");
         }
 
-        HttpHeaders headers = new HttpHeaders();
         headers.setContentType(MediaType.MULTIPART_FORM_DATA);
+        headers.setContentLength(800);
+        
+        HttpEntity<MultiValueMap<String, Object>> requestEntity = new HttpEntity<>(body, headers);
+        ResponseEntity<Map> responseEntity = restTemplate.exchange(
+               "http://127.0.0.1:8000/api/llm/chat/",
+                HttpMethod.POST,
+                requestEntity,
+                Map.class);
 
-        RequestEntity<Object> request = RequestEntity
-                .post("http://127.0.0.1:8000/api/llm/chat/")
-                .header(MediaType.MULTIPART_FORM_DATA.toString())
-                .body(body);
-
-        ResponseEntity<Map> responseEntity = restTemplate.exchange(request, Map.class);
+//        ResponseEntity<Map> responseEntity = restTemplate.exchange(request, Map.class);
         Map result = new HashMap();
         Map responseEntityBody = responseEntity.getBody();
         try {
