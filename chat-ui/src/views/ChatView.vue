@@ -3,17 +3,20 @@
     <vue-advanced-chat
         :current-user-id="'USER'"
         :rooms="JSON.stringify(rooms)"
-        :rooms-list-opened="false"
-        :loading-rooms="false"
         :messages-loaded="true"
-        :rooms-loaded="false"
+        :rooms-loaded="true"
         :show-audio="false"
         :multiple-files="false"
-        :messages="JSON.stringify(messages)"
+        :messages="JSON.stringify(allMessages[threadId])"
         @send-message="sendMessage($event.detail[0])"
-        @fetch-message="addMessageToChat"
+        @fetch-messages="fetchMessage"
+        @room-info="enterRoom"
+        @add-room="addRoom"
+        @room-action-handler="console.log(v)"
+        @menu-action-handler="logger"
     />
   </div>
+  {{ allMessages }}
 </template>
 
 <script setup lang="ts">
@@ -22,11 +25,11 @@ import { register } from 'vue-advanced-chat'
 import axios, {type AxiosResponse} from "axios";
 register();
 const currentUserId = "USER";
-
+const threadId = ref(Math.random().toString());
 const rooms = ref([
   {
-    roomId: Math.random().toString(),
-    roomName: 'Chat AI',
+    roomId: threadId.value,
+    roomName: 'Chat AI' + threadId.value,
     avatar: 'https://66.media.tumblr.com/avatar_c6a8eae4303e_512.pnj',
     users: [
       { _id: 'Chat AI', username: 'Chat AI' },
@@ -34,7 +37,9 @@ const rooms = ref([
     ]
   }
 ]);
-
+interface AllMessages {
+  [key:string]: [];
+}
 interface Message {
   _id: number,
   content: string,
@@ -43,40 +48,36 @@ interface Message {
   date: string,
   files?: object[]
 }
+const allMessages = ref<AllMessages>({
+  [threadId.value]: []
+});
 const messages = ref<Message[]>([]);
 
 const sendMessage = (message: { content: string, files: any[] }) => {
-  if(message.files) {
-    messages.value = [
-      ...messages.value,
-      {
-        _id: messages.value.length,
-        content: message.content,
-        senderId: currentUserId,
-        timestamp: new Date().toString().substring(16, 21),
-        date: new Date().toDateString(),
-        files: [message.files[0]]
-      }
-    ]
-  } else {
-    messages.value = [
-      ...messages.value,
-      {
-        _id: messages.value.length,
-        content: message.content,
-        senderId: currentUserId,
-        timestamp: new Date().toString().substring(16, 21),
-        date: new Date().toDateString()
-      }
-    ]
-  }
+    const newMessage = {
+      _id: allMessages.value[threadId.value].length,
+      content: message.content,
+      senderId: currentUserId,
+      timestamp: new Date().toString().substring(16, 21),
+      date: new Date().toDateString(),
+    };
+
+    if (message.files) {
+      newMessage.files = [message.files[0]];
+    }
+    console.log(threadId.value)
+    console.log(allMessages.value[threadId.value])
+    allMessages.value[threadId.value] = [
+      ...allMessages.value[threadId.value],
+      newMessage
+    ];
   receiveMessage(message);
 };
 
 const receiveMessage = async (message: { content: string, files: any[] }) => {
   const formData = new FormData();
   formData.append('chat', message.content);
-  formData.append('threadId', rooms.value[0].roomId)
+  formData.append('threadId', threadId.value)
 
   if(message.files) {
     formData.append("file", message.files[0].blob, message.files[0].name)
@@ -94,15 +95,44 @@ const receiveMessage = async (message: { content: string, files: any[] }) => {
 }
 
 const addMessageToChat = (response: AxiosResponse) => {
-    messages.value = [
-      ...messages.value,
-      {
-        _id: messages.value.length,
-        content: response.data.data,
-        senderId: "Chat AI",
-        timestamp: new Date().toString().substring(16, 21),
-        date: new Date().toDateString()
-      }
-    ]
+  allMessages.value[threadId.value] = [
+    ...allMessages.value[threadId.value],
+    {
+      _id: messages.value.length,
+      content: response.data.data,
+      senderId: threadId.value,
+      timestamp: new Date().toString().substring(16, 21),
+      date: new Date().toDateString()
+    }
+  ];
+}
+
+const addRoom = () => {
+  threadId.value = Math.random().toString();
+  rooms.value = [
+      ...rooms.value,
+    {
+      roomId: threadId.value,
+      roomName: 'Chat AI' + threadId.value,
+      avatar: 'https://66.media.tumblr.com/avatar_c6a8eae4303e_512.pnj',
+      users: [
+        { _id: threadId.value, username: 'Chat AI' },
+        { _id: 'USER', username: 'USER' }
+      ]
+    }
+  ]
+  allMessages.value[threadId.value] = [];
+}
+const logger = ({v1, v2}) => {
+  console.log(v2)
+}
+const enterRoom = (room) => {
+  const roomId = room.detail[0].roomId;
+  console.log(roomId)
+  threadId.value = roomId
+}
+
+const fetchMessage = ({ room, options }) => {
+  console.log(room, options)
 }
 </script>
