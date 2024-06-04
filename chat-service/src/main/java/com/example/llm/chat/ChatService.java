@@ -57,21 +57,23 @@ public class ChatService {
                 .header(MediaType.MULTIPART_FORM_DATA.toString())
                 .body(body);
 
-        ResponseEntity<String> responseEntity = restTemplate.exchange(request, String.class);
+        ResponseEntity<Map> responseEntity = restTemplate.exchange(request, Map.class);
         Map result = new HashMap();
+        Map responseEntityBody = responseEntity.getBody();
         try {
             if (responseEntity.getStatusCode().is2xxSuccessful()) {
-                log.info(responseEntity.getBody());
-                result.put("result", 1);
-                result.put("data", responseEntity.getBody());
+                log.info(responseEntityBody.toString());
+                result.put("result", responseEntityBody.get("result"));
+                result.put("data", responseEntityBody.get("data"));
+                result.put("errorMessage", responseEntityBody.get("errorMessage"));
             } else {
-                result.put("result", 0);
-                result.put("errorMessage", responseEntity.getBody());
+                result.put("result", responseEntityBody.get("result"));
+                result.put("errorMessage", responseEntityBody.get("errorMessage"));
             }
         } catch (Exception e) {
             log.error(e.getMessage());
-            result.put("result", 0);
-            result.put("errorMessage", responseEntity.getBody());
+            result.put("result", responseEntityBody.get("result"));
+            result.put("errorMessage", responseEntityBody.get("errorMessage"));
         }
         return result;
     }

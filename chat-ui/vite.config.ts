@@ -7,7 +7,16 @@ import VueDevTools from 'vite-plugin-vue-devtools'
 // https://vitejs.dev/config/
 export default defineConfig({
   plugins: [
-    vue(),
+    vue({
+      template: {
+        compilerOptions: {
+          // treat all tags with a dash as custom elements
+          isCustomElement: tagName => {
+            return tagName === 'vue-advanced-chat' || tagName === 'emoji-picker'
+          }
+        }
+      }
+    }),
     VueDevTools(),
   ],
   resolve: {
