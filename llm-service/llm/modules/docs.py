@@ -71,6 +71,7 @@ class DoscModule:
                 주어진 정보를 참고 하여 답변을 해야해.
                 주어진 정보를 참고 해도 알 수 없을 경우 항상 "제가 가진 정보로는 알 수 없습니다."로 응답 해줘.
                 Context: {context}
+                History: {history}
                 Question: {input}
             """
         )
