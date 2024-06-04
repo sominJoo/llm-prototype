@@ -7,7 +7,7 @@ from langchain_core.prompts import ChatPromptTemplate
 
 class BasicDBModule:
     @staticmethod
-    def dbChain(llm):
+    def dbChain(llm, memory):
         """
         일반 DB을 LLM에 연동하는 모듈.
         :param llm: 선언한 LLM 모델
@@ -32,14 +32,15 @@ class BasicDBModule:
                 SQLResult: "SQL 쿼리의 결과"
                 Answer: "최종 답변"
                 
-                SQL 쿼리는 명확하게 출력되어야 하며 따옴표나 다른 것(Markdown)으로 둘러싸지 않아야 합니다.
+                SQL Query는 명확하게 출력되어야 하며 따옴표나 다른 것(Markdown)으로 둘러싸지 않아야 합니다.
                 아래에 나열된 표만 사용하십시오. 
                 아래 나열된 표 이외에 조회하길 원한다면 SQL 쿼리를 "select * from sys"로 조회합니다.
                 
                 {table_info}
                 
-                질문: {input}
+                History: {history}
+                Question: {input}
             """
         )
-        db_chain = SQLDatabaseChain.from_llm(llm, db, prompt, verbose=True)
+        db_chain = SQLDatabaseChain.from_llm(llm, db, prompt,memory=memory, verbose=True)
         return db_chain
