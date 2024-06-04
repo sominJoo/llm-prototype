@@ -63,12 +63,7 @@ const receiveMessage = async (message: { content: string, files: any[] }) => {
   formData.append('threadId', rooms.value[0].roomId)
 
   if(message.files) {
-    console.log(message.files)
-    formData.append("file", message.files[0])
-    // message.files.forEach(file => {
-    //
-    //   formData.append('file', file)
-    // })
+    formData.append("file", message.files[0].blob, message.files[0].name)
   }
   formData.forEach(function(value, key){
     console.log(key + ': ' + value);
