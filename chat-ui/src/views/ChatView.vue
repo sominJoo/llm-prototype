@@ -62,22 +62,22 @@ const receiveMessage = async (message: { content: string, files: any[] }) => {
   formData.append('chat', message.content);
   formData.append('threadId', rooms.value[0].roomId)
 
-  if(message.files && message.files.length > 0) {
-    message.files.forEach(file => {
-      formData.append('file', file, file.name)
-    })
+  if(message.files) {
+    formData.append("file", message.files[0].blob, message.files[0].name)
   }
+  formData.forEach(function(value, key){
+    console.log(key + ': ' + value);
+  });
 
   try {
     const response: AxiosResponse = await axios.post("/api/llm/chat", formData);
     addMessageToChat(response);
   } catch (err) {
-    console.error('err,,,,,', err)
+    console.error(err)
   }
 }
 
 const addMessageToChat = (response: AxiosResponse) => {
-  setTimeout(() => {
     messages.value = [
       ...messages.value,
       {
@@ -88,6 +88,5 @@ const addMessageToChat = (response: AxiosResponse) => {
         date: new Date().toDateString()
       }
     ]
-  }, 1500)
 }
 </script>
