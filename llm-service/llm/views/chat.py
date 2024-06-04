@@ -13,7 +13,7 @@ from langchain.chains import ConversationChain
 
 class ChatAPIView(APIView):
     memory_dict = {}
-
+    file_memory_dict = {}
     @auto_response
     def post(self, request):
         """
@@ -43,6 +43,10 @@ class ChatAPIView(APIView):
 
         # Question 분석 / 질문 타입 찾기
         question_type = self.check_chain_type(LLM, question)
+
+        # 현재 파일에 대한 질문만 타입 변경
+        if file:
+            question_type="docs"
         print("question_type = ", question_type)
 
         result = ""
@@ -55,12 +59,6 @@ class ChatAPIView(APIView):
 
             elif question_type == "db":
                 db_chain = db.BasicDBModule.dbChain(LLM, thread_memory)
-                # NOTE: SQLDatabaseChain에 memory 기능이 존재하지 않으므로 History를 강제로 넣어줌
-                # response = db_chain.invoke({'input': question, 'history': thread_memory.chat_memory.messages})
-                # response = db_chain.invoke({'query': question})
-                # result = response["result"]
-                # 메모리에 대화 내용 저장
-                # thread_memory.save_context({"input": question}, {"response": result})
                 response = db_chain.invoke(question)
                 result = response["result"]
 
@@ -80,15 +78,36 @@ class ChatAPIView(APIView):
                 result = response["answer"]
 
             elif question_type == "docs":
+                ## 메모리에 저장된 파일 /URL 있는지 확인
                 url = self.parse_url(LLM, question, thread_memory)
                 dcos_chain = None
-                if file:
-                    dcos_chain = docs.DoscModule.docsChain(LLM, file)
-                elif url:
-                    dcos_chain = docs.DoscModule.urlChain(LLM, url)
+
+                if thread_id not in self.file_memory_dict:
+                    self.file_memory_dict[thread_id] = None
+                file_memory = self.file_memory_dict[thread_id]
+
+                # 현재 스레드에 저장된 문서가 있는지 확인
+                # 없으면 현재 문서 저장
+                if not file_memory and file or url:
+                    if file:
+                        file_memory = {"type": "file", "data": file}
+                    elif url:
+                        file_memory = {"type": "url", "data": url}
+
+                # 저장된 파일 메모리를 확인해서 문서 파싱
+                if file_memory["type"] == "file":
+                    data = file
+                    if not file:
+                        data = file_memory["data"]
+                    dcos_chain = docs.DoscModule.docsChain(LLM, data)
+                elif file_memory["type"] == "url":
+                    data = url
+                    if not url:
+                        data = file_memory["data"]
+                    dcos_chain = docs.DoscModule.urlChain(LLM, data)
 
                 # NOTE: ConversationalRetrievalChain 사용시 memory 속성값 작동이 잘 되지 않아 input 값으로 history 이전 내용을 넣어줌
-                response = dcos_chain.invoke({'input': question, 'thread_history': thread_memory.chat_memory.messages})
+                response = dcos_chain.invoke({'input': question, 'history': thread_memory.chat_memory.messages})
                 result = response["answer"]
                 # 메모리에 대화 내용 저장
                 thread_memory.save_context({"input": question}, {"response": result})
