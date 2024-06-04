@@ -14,7 +14,6 @@
         @add-room="addRoom"
     />
   </div>
-  {{ allMessages }}
 </template>
 
 <script setup lang="ts">
@@ -27,7 +26,7 @@ const threadId = ref(Math.random().toString());
 const rooms = ref([
   {
     roomId: threadId.value,
-    roomName: 'Chat AI' + threadId.value,
+    roomName: 'Chat AI',
     avatar: 'https://66.media.tumblr.com/avatar_c6a8eae4303e_512.pnj',
     users: [
       { _id: 'Chat AI', username: 'Chat AI' },
@@ -63,8 +62,6 @@ const sendMessage = (message: { content: string, files: any[] }) => {
     if (message.files) {
       newMessage.files = [message.files[0]];
     }
-    console.log(threadId.value)
-    console.log(allMessages.value[threadId.value])
     allMessages.value[id] = [
       ...allMessages.value[id],
       newMessage
@@ -130,6 +127,9 @@ const messagesLoaded = ref(false)
 const fetchMessage = ({ room, options }) => {
   messagesLoaded.value=false;
   threadId.value = room.roomId;
+  /**
+   * NOTE: spinner message loader 문제
+   */
   setTimeout(() => {
     messagesLoaded.value = true
   }, 0)
