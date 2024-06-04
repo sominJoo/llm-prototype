@@ -3,7 +3,7 @@
     <vue-advanced-chat
         :current-user-id="'USER'"
         :rooms="JSON.stringify(rooms)"
-        :messages-loaded="true"
+        :messages-loaded="messagesLoaded"
         :rooms-loaded="true"
         :show-audio="false"
         :multiple-files="false"
@@ -125,8 +125,13 @@ const addRoom = () => {
 const enterRoom = (room) => {
   threadId.value = room.detail[0].roomId;
 }
+const messagesLoaded = ref(false)
 
 const fetchMessage = ({ room, options }) => {
+  messagesLoaded.value=false;
   threadId.value = room.roomId;
+  setTimeout(() => {
+    messagesLoaded.value = true
+  }, 0)
 }
 </script>
