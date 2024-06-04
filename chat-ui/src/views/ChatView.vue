@@ -9,11 +9,9 @@
         :multiple-files="false"
         :messages="JSON.stringify(allMessages[threadId])"
         @send-message="sendMessage($event.detail[0])"
-        @fetch-messages="fetchMessage"
+        @fetch-messages="fetchMessage($event.detail[0])"
         @room-info="enterRoom"
         @add-room="addRoom"
-        @room-action-handler="console.log(v)"
-        @menu-action-handler="logger"
     />
   </div>
   {{ allMessages }}
@@ -21,7 +19,7 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import { register } from 'vue-advanced-chat'
+import {register} from 'vue-advanced-chat'
 import axios, {type AxiosResponse} from "axios";
 register();
 const currentUserId = "USER";
@@ -61,23 +59,23 @@ const sendMessage = (message: { content: string, files: any[] }) => {
       timestamp: new Date().toString().substring(16, 21),
       date: new Date().toDateString(),
     };
-
+    const id = threadId.value;
     if (message.files) {
       newMessage.files = [message.files[0]];
     }
     console.log(threadId.value)
     console.log(allMessages.value[threadId.value])
-    allMessages.value[threadId.value] = [
-      ...allMessages.value[threadId.value],
+    allMessages.value[id] = [
+      ...allMessages.value[id],
       newMessage
     ];
-  receiveMessage(message);
+  receiveMessage(message, id);
 };
 
-const receiveMessage = async (message: { content: string, files: any[] }) => {
+const receiveMessage = async (message: { content: string, files: any[] }, id: string) => {
   const formData = new FormData();
   formData.append('chat', message.content);
-  formData.append('threadId', threadId.value)
+  formData.append('threadId', id)
 
   if(message.files) {
     formData.append("file", message.files[0].blob, message.files[0].name)
@@ -88,19 +86,19 @@ const receiveMessage = async (message: { content: string, files: any[] }) => {
 
   try {
     const response: AxiosResponse = await axios.post("/api/llm/chat", formData);
-    addMessageToChat(response);
+    addMessageToChat(response, id);
   } catch (err) {
     console.error(err)
   }
 }
 
-const addMessageToChat = (response: AxiosResponse) => {
+const addMessageToChat = (response: AxiosResponse, senderId: string) => {
   allMessages.value[threadId.value] = [
     ...allMessages.value[threadId.value],
     {
       _id: messages.value.length,
       content: response.data.data,
-      senderId: threadId.value,
+      senderId: senderId,
       timestamp: new Date().toString().substring(16, 21),
       date: new Date().toDateString()
     }
@@ -123,16 +121,12 @@ const addRoom = () => {
   ]
   allMessages.value[threadId.value] = [];
 }
-const logger = ({v1, v2}) => {
-  console.log(v2)
-}
+
 const enterRoom = (room) => {
-  const roomId = room.detail[0].roomId;
-  console.log(roomId)
-  threadId.value = roomId
+  threadId.value = room.detail[0].roomId;
 }
 
 const fetchMessage = ({ room, options }) => {
-  console.log(room, options)
+  threadId.value = room.roomId;
 }
 </script>
