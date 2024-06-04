@@ -26,7 +26,7 @@ const threadId = ref(Math.random().toString());
 const rooms = ref([
   {
     roomId: threadId.value,
-    roomName: 'Chat AI',
+    roomName: 'Chat AI 1',
     avatar: 'https://66.media.tumblr.com/avatar_c6a8eae4303e_512.pnj',
     users: [
       { _id: 'Chat AI', username: 'Chat AI' },
@@ -90,8 +90,8 @@ const receiveMessage = async (message: { content: string, files: any[] }, id: st
 }
 
 const addMessageToChat = (response: AxiosResponse, senderId: string) => {
-  allMessages.value[threadId.value] = [
-    ...allMessages.value[threadId.value],
+  allMessages.value[senderId] = [
+    ...allMessages.value[senderId],
     {
       _id: messages.value.length,
       content: response.data.data,
@@ -108,7 +108,7 @@ const addRoom = () => {
       ...rooms.value,
     {
       roomId: threadId.value,
-      roomName: 'Chat AI' + threadId.value,
+      roomName: 'Chat AI ' + (rooms.value.length + 1).toString(),
       avatar: 'https://66.media.tumblr.com/avatar_c6a8eae4303e_512.pnj',
       users: [
         { _id: threadId.value, username: 'Chat AI' },
