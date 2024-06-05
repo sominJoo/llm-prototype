@@ -26,7 +26,9 @@ class ChatAPIView(APIView):
             return "현재 Chat 기능을 사용할 수 없습니다."
 
         question = request.data["chat"]
-        file = request.data["file"]
+        file = None
+        if "file" in request.data:
+            file = request.data["file"]
         thread_id = request.data["thread_id"]
 
         if not thread_id:
