@@ -47,7 +47,7 @@ class ChatAPIView(APIView):
         question_type = self.check_chain_type(LLM, question)
 
         # 현재 파일에 대한 질문만 타입 변경
-        if file:
+        if file or thread_id in self.file_memory_dict:
             question_type="docs"
         print("question_type = ", question_type)
 
@@ -68,7 +68,8 @@ class ChatAPIView(APIView):
                 # Question 분석 찾기
                 question_prompt = ChatPromptTemplate.from_template(
                     """ History : {history}
-                        Question: {input}"""
+                        Question: {input}
+                        AI:"""
                 )
                 llm_chain = ConversationChain(
                     llm=LLM,
@@ -80,33 +81,23 @@ class ChatAPIView(APIView):
                 result = response["answer"]
 
             elif question_type == "docs":
-                ## 메모리에 저장된 파일 /URL 있는지 확인
-                url = self.parse_url(LLM, question, thread_memory)
-                dcos_chain = None
 
                 if thread_id not in self.file_memory_dict:
                     self.file_memory_dict[thread_id] = None
                 file_memory = self.file_memory_dict[thread_id]
+                url = None
 
-                # 현재 스레드에 저장된 문서가 있는지 확인
-                # 없으면 현재 문서 저장
-                if not file_memory and file or url:
-                    if file:
-                        file_memory = {"type": "file", "data": file}
-                    elif url:
-                        file_memory = {"type": "url", "data": url}
+                # file, file_memory가 없을때 URL 파싱
+                if not file and not file_memory:
+                    url = self.parse_url(LLM, question, thread_memory)
 
-                # 저장된 파일 메모리를 확인해서 문서 파싱
-                if file_memory["type"] == "file":
-                    data = file
-                    if not file:
-                        data = file_memory["data"]
-                    dcos_chain = docs.DoscModule.docsChain(LLM, data)
-                elif file_memory["type"] == "url":
-                    data = url
-                    if not url:
-                        data = file_memory["data"]
-                    dcos_chain = docs.DoscModule.urlChain(LLM, data)
+                file_memory = self.update_file_memory(thread_id, file_memory, file, url)
+                dcos_chain = self.create_dcos_chain(LLM, file_memory, file, url)
+
+                response = dcos_chain.invoke({'input': question, 'history': thread_memory.chat_memory.messages})
+                result = response["answer"]
+
+                thread_memory.save_context({"input": question}, {"response": result})
 
                 # NOTE: ConversationalRetrievalChain 사용시 memory 속성값 작동이 잘 되지 않아 input 값으로 history 이전 내용을 넣어줌
                 response = dcos_chain.invoke({'input': question, 'history': thread_memory.chat_memory.messages})
@@ -121,6 +112,27 @@ class ChatAPIView(APIView):
 
         return result
 
+    def update_file_memory(self, thread_id, file_memory, file, url):
+        # 현재 파일 메모리가 없고, file 또는 URL 데이터가 있을때 file_memory 저장
+        if not file_memory and (file or url):
+            if file:
+                file_memory = {"type": "file", "data": file}
+            elif url:
+                file_memory = {"type": "url", "data": url}
+            self.file_memory_dict[thread_id] = file_memory
+        return file_memory
+
+    def create_dcos_chain(self, LLM, file_memory, file, url):
+        dcos_chain = None
+        if file_memory["type"] == "file":
+            data = file if file else file_memory["data"]
+            dcos_chain = docs.DoscModule.docsChain(LLM, data)
+            if file:
+                data.close()
+        elif file_memory["type"] == "url":
+            data = url if url else file_memory["data"]
+            dcos_chain = docs.DoscModule.urlChain(LLM, data)
+        return dcos_chain
     @staticmethod
     def check_chain_type(llm, question):
         """
@@ -159,9 +171,11 @@ class ChatAPIView(APIView):
         # Question 분석 찾기
         question_prompt = ChatPromptTemplate.from_template(
             """ 질문에서 'URL' 형식만 추출해 URL만 문자열로 반환해야 합니다.
+                URL이 존재하지 않으면 빈 문자열을 반환합니다.
                 정규식 r"http[s]?://(?:[a-zA-Z]|[0-9]|[$\-@\.&+:/?=]|[!*\(\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+" 이 형식을 따릅니다.
                 History: {history}
-                Question: {input}"""
+                Question: {input}
+                AI:"""
         )
         question_llm_chain = question_prompt | llm
         response = question_llm_chain.invoke({"input": question, "history": memory})
