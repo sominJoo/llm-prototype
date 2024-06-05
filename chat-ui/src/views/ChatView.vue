@@ -76,14 +76,15 @@ const receiveMessage = async (message: { content: string, files: any[] }, id: st
   formData.append('threadId', id)
 
   if(message.files) {
-    formData.append("file", message.files[0].blob, message.files[0].name)
+    const file = message.files[0]
+    formData.append("file", message.files[0].blob, file.name+"."+file.extension)
   }
-  formData.forEach(function(value, key){
-    console.log(key + ': ' + value);
-  });
-
   try {
-    const response: AxiosResponse = await axios.post("/api/llm/chat", formData);
+    const response: AxiosResponse = await axios.post("/api/llm/chat", formData, {
+      headers: {
+        "Content-Type": "multipart/form-data"
+      }
+    });
     addMessageToChat(response, id);
   } catch (err) {
     console.error(err)
