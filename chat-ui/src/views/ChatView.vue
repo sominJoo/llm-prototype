@@ -1,6 +1,7 @@
 <template>
   <div>
     <vue-advanced-chat
+        height="calc(100vh - 20px)"
         :current-user-id="'USER'"
         :rooms="JSON.stringify(rooms)"
         :messages-loaded="messagesLoaded"
@@ -26,7 +27,7 @@ const threadId = ref(Math.random().toString());
 const rooms = ref([
   {
     roomId: threadId.value,
-    roomName: 'Chat AI',
+    roomName: 'Chat AI 1',
     avatar: 'https://66.media.tumblr.com/avatar_c6a8eae4303e_512.pnj',
     users: [
       { _id: 'Chat AI', username: 'Chat AI' },
@@ -90,15 +91,18 @@ const receiveMessage = async (message: { content: string, files: any[] }, id: st
 }
 
 const addMessageToChat = (response: AxiosResponse, senderId: string) => {
+  const isError = response.data.data === null;
+  const content = isError ? response.data.errorMessage : response.data.data;
+  const newMessage =       {
+    _id: messages.value.length,
+    content: content,
+    senderId: senderId,
+    timestamp: new Date().toString().substring(16, 21),
+    date: new Date().toDateString()
+  }
   allMessages.value[threadId.value] = [
     ...allMessages.value[threadId.value],
-    {
-      _id: messages.value.length,
-      content: response.data.data,
-      senderId: senderId,
-      timestamp: new Date().toString().substring(16, 21),
-      date: new Date().toDateString()
-    }
+    newMessage
   ];
 }
 
@@ -108,7 +112,7 @@ const addRoom = () => {
       ...rooms.value,
     {
       roomId: threadId.value,
-      roomName: 'Chat AI' + threadId.value,
+      roomName: 'Chat AI ' + (rooms.value.length + 1).toString(),
       avatar: 'https://66.media.tumblr.com/avatar_c6a8eae4303e_512.pnj',
       users: [
         { _id: threadId.value, username: 'Chat AI' },
@@ -125,7 +129,7 @@ const enterRoom = (room) => {
 const messagesLoaded = ref(false)
 
 const fetchMessage = ({ room, options }) => {
-  messagesLoaded.value=false;
+  messagesLoaded.value = false;
   threadId.value = room.roomId;
   /**
    * NOTE: spinner message loader 문제
