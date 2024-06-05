@@ -1,6 +1,7 @@
 <template>
   <div>
     <vue-advanced-chat
+        height="calc(100vh - 20px)"
         :current-user-id="'USER'"
         :rooms="JSON.stringify(rooms)"
         :messages-loaded="messagesLoaded"
@@ -90,15 +91,18 @@ const receiveMessage = async (message: { content: string, files: any[] }, id: st
 }
 
 const addMessageToChat = (response: AxiosResponse, senderId: string) => {
-  allMessages.value[senderId] = [
-    ...allMessages.value[senderId],
-    {
-      _id: messages.value.length,
-      content: response.data.data,
-      senderId: senderId,
-      timestamp: new Date().toString().substring(16, 21),
-      date: new Date().toDateString()
-    }
+  const isError = response.data.data === null;
+  const content = isError ? response.data.errorMessage : response.data.data;
+  const newMessage =       {
+    _id: messages.value.length,
+    content: content,
+    senderId: senderId,
+    timestamp: new Date().toString().substring(16, 21),
+    date: new Date().toDateString()
+  }
+  allMessages.value[threadId.value] = [
+    ...allMessages.value[threadId.value],
+    newMessage
   ];
 }
 
@@ -125,7 +129,7 @@ const enterRoom = (room) => {
 const messagesLoaded = ref(false)
 
 const fetchMessage = ({ room, options }) => {
-  messagesLoaded.value=false;
+  messagesLoaded.value = false;
   threadId.value = room.roomId;
   /**
    * NOTE: spinner message loader 문제
