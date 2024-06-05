@@ -44,7 +44,8 @@ interface Message {
   senderId: string,
   timestamp?: string,
   date: string,
-  files?: object[]
+  files?: object[],
+  seen?: boolean
 }
 const allMessages = ref<AllMessages>({
   [threadId.value]: []
@@ -58,6 +59,7 @@ const sendMessage = (message: { content: string, files: any[] }) => {
       senderId: currentUserId,
       timestamp: new Date().toString().substring(16, 21),
       date: new Date().toDateString(),
+      seen: true
     };
     const id = threadId.value;
     if (message.files) {
@@ -99,7 +101,8 @@ const addMessageToChat = (response: AxiosResponse, senderId: string) => {
     content: content,
     senderId: senderId,
     timestamp: new Date().toString().substring(16, 21),
-    date: new Date().toDateString()
+    date: new Date().toDateString(),
+    seen: true
   }
   allMessages.value[threadId.value] = [
     ...allMessages.value[threadId.value],
