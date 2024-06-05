@@ -73,7 +73,7 @@ class DoscModule:
                 Context: {context}
                 History: {history}
                 Question: {input}
-            """
+                AI:"""
         )
 
         retriever = vector.as_retriever()

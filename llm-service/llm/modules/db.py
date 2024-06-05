@@ -39,8 +39,7 @@ class BasicDBModule:
                 {table_info}
                 
                 History: {history}
-                Question: {input}
-            """
+                Question: {input}"""
         )
         db_chain = SQLDatabaseChain.from_llm(llm, db, prompt,memory=memory, verbose=True)
         return db_chain

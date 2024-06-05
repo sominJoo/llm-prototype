@@ -32,7 +32,7 @@ class GraphDBModule:
                 
                 History : {history}
                 Question: {input}
-            """
+                AI:"""
         )
         # graphDB 체인 설정
         chain = GraphCypherQAChain.from_llm(graph=graph, llm=llm, memory=thread_memory, prompt=prompt, verbose=True)
